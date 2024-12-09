@@ -1,87 +1,172 @@
-# Vite Starter Kit
+- Для HTTP-запитів використана бібліотека [axios](https://axios-http.com/).
+- Використовується синтаксис `async/await`.
+- Для повідомлень використана бібліотека
+  [notiflix](https://github.com/notiflix/Notiflix#readme).
 
-Welcome to the **Vite Starter Kit**! This is a modern and fast development setup using Vite, designed for a smooth development experience with vanilla JavaScript. It includes a range of useful plugins for enhanced performance, code quality, and optimizations.
+# Завдання - пошук зображень
 
-## Table of Contents
+Створи фронтенд частину застосунку пошуку і перегляду зображень за ключовим
+словом. Додай оформлення елементів інтерфейсу. Подивись демо-відео роботи
+застосунку.
 
-- [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Plugins](#plugins)
-- [Contributing](#contributing)
-- [License](#license)
+https://user-images.githubusercontent.com/17479434/125040406-49a6f600-e0a0-11eb-975d-e7d8eaf2af6b.mp4
 
-## Features
+## Форма пошуку
 
-- **Fast Development**: Leveraging Vite for lightning-fast build and development processes.
-- **Legacy Browser Support**: Includes polyfills for compatibility with older browsers.
-- **Code Compression**: Automatic Gzip compression for optimized asset delivery.
-- **Image Optimization**: Minimize image sizes with `unplugin-imagemin`.
-- **Code Quality Tools**: Integrated ESLint and Stylelint for maintaining high code quality.
-- **Visualize Bundle**: Rollup plugin for visualizing your build size and contents.
+Форма спочатку міститья в HTML документі. Користувач буде вводити рядок для
+пошуку у текстове поле, а по сабміту форми необхідно виконувати HTTP-запит.
 
-## Installation
-
-To get started with this Vite starter kit, follow these steps:
-
-1. **Clone the Repository**
-
-   ```bash
-   git clone https://github.com/yourusername/vite-starter-kit.git
-   cd vite-starter-kit
-   ```
-
-2. **Install Dependencies**
-
-   ```bash
-   npm install
-   ```
-
-## Usage
-
-### Development Mode
-
-To start a local development server, run:
-
-```bash
-npm run dev
+```html
+<form class="search-form" id="search-form">
+  <input
+    type="text"
+    name="searchQuery"
+    autocomplete="off"
+    placeholder="Search images..."
+  />
+  <button type="submit">Search</button>
+</form>
 ```
 
-This will start Vite's development server and watch for changes in your source files.
+## HTTP-запити
 
-### Building for Production
+Для бекенду використовуй публічний API сервісу
+[Pixabay](https://pixabay.com/api/docs/). Зареєструйся, отримай свій унікальний
+ключ доступу і ознайомся з документацією.
 
-To build your project for production, use:
+Список параметрів рядка запиту, які тобі обов'язково необхідно вказати:
 
-```bash
-npm run build
+- `key` - твій унікальний ключ доступу до API.
+- `q` - термін для пошуку. Те, що буде вводити користувач.
+- `image_type` - тип зображення. На потрібні тільки фотографії, тому постав
+  значення `photo`.
+- `orientation` - орієнтація фотографії. Постав значення `horizontal`.
+- `safesearch` - фільтр за віком. Постав значення `true`.
+
+У відповіді буде масив зображень, що задовольнили критерії параметрів запиту.
+Кожне зображення описується об'єктом, з якого тобі цікаві тільки наступні
+властивості:
+
+- `webformatURL` - посилання на маленьке зображення для списку карток.
+- `largeImageURL` - посилання на велике зображення.
+- `tags` - рядок з описом зображення. Підійде для атрибуту `alt`.
+- `likes` - кількість лайків.
+- `views` - кількість переглядів.
+- `comments` - кількість коментарів.
+- `downloads` - кількість завантажень.
+
+Якщо бекенд повертає порожній масив, значить нічого підходящого не було
+знайдено. У такому разі показуй повідомлення з текстом
+`"Sorry, there are no images matching your search query. Please try again."`.
+Для повідомлень використовуй бібліотеку
+[notiflix](https://github.com/notiflix/Notiflix#readme).
+
+## Галерея і картка зображення
+
+Елемент `div.gallery` спочатку міститься в HTML документі, і в нього необхідно
+рендерити розмітку карток зображень. Під час пошуку за новим ключовим словом
+необхідно повністю очищати вміст галереї, щоб не змішувати результати.
+
+```html
+<div class="gallery">
+  <!-- Картки зображень -->
+</div>
 ```
 
-This will generate optimized static assets in the dist directory.
+Шаблон розмітки картки одного зображення для галереї.
 
-### Preview the Build
-
-To preview the production build locally, run:
-
-```bash
-npm run preview
+```html
+<div class="photo-card">
+  <img src="" alt="" loading="lazy" />
+  <div class="info">
+    <p class="info-item">
+      <b>Likes</b>
+    </p>
+    <p class="info-item">
+      <b>Views</b>
+    </p>
+    <p class="info-item">
+      <b>Comments</b>
+    </p>
+    <p class="info-item">
+      <b>Downloads</b>
+    </p>
+  </div>
+</div>
 ```
 
-This command will start a local server where you can view the fully optimized build.
+## Пагінація
 
-## Plugins
+Pixabay API підтримує пагінацію і надає параметри `page` і `per_page`. Зроби
+так, щоб в кожній відповіді приходило 40 об'єктів (за замовчуванням 20).
 
-This starter kit uses a variety of plugins to enhance your development workflow:
+- Початкове значення параметра `page` повинно бути `1`.
+- З кожним наступним запитом, його необхідно збільшити на `1`.
+- У разі пошуку за новим ключовим словом, значення `page` потрібно повернути до
+  початкового, оскільки буде пагінація по новій колекції зображень.
 
-- **[@vitejs/plugin-legacy](https://www.npmjs.com/package/@vitejs/plugin-legacy)**: Adds support for older browsers by including polyfills.
-- **[vite-plugin-compression](https://www.npmjs.com/package/vite-plugin-compression)**: Compresses assets using Gzip to reduce file sizes.
-- **[unplugin-imagemin](https://www.npmjs.com/package/unplugin-imagemin)**: Optimizes images for faster loading.
-- **[@rollup/plugin-babel](https://www.npmjs.com/package/@rollup/plugin-babel)**: Transpiles JavaScript with Babel to ensure compatibility with older browsers.
-- **[@rollup/plugin-commonjs](https://www.npmjs.com/package/@rollup/plugin-commonjs)**: Converts CommonJS modules to ES6 for use with Rollup.
-- **[@rollup/plugin-image](https://www.npmjs.com/package/@rollup/plugin-image)**: Handles image imports in your project.
-- **[vite-plugin-purgecss](https://www.npmjs.com/package/vite-plugin-purgecss)**: Removes unused CSS to reduce bundle size.
-- **[rollup-plugin-visualizer](https://www.npmjs.com/package/rollup-plugin-visualizer)**: Visualizes your bundle size to help you optimize it.
+HTML документ вже містить розмітку кнопки, по кліку на яку, необхідно виконувати
+запит за наступною групою зображень і додавати розмітку до вже існуючих
+елементів галереї.
 
-## Contributing
+```html
+<button type="button" class="load-more">Load more</button>
+```
 
-We welcome contributions to improve this starter kit! If you have suggestions or find issues, please open an issue or submit a pull request.
+- В початковому стані кнопка повинна бути прихована.
+- Після першого запиту кнопка з'являється в інтерфейсі під галереєю.
+- При повторному сабміті форми кнопка спочатку ховається, а після запиту знову
+  відображається.
+
+У відповіді бекенд повертає властивість `totalHits` - загальна кількість
+зображень, які відповідають критерію пошуку (для безкоштовного акаунту). Якщо
+користувач дійшов до кінця колекції, ховай кнопку і виводь повідомлення з
+текстом `"We're sorry, but you've reached the end of search results."`.
+
+## Додатково
+
+> ⚠️ Наступний функціонал не обов'язковий, але буде хорошою додатковою
+> практикою.
+
+### Повідомлення
+
+Після першого запиту з кожним новим пошуком отримувати повідомлення, в якому
+буде написано, скільки всього знайшли зображень (властивість `totalHits`). Текст
+повідомлення - `"Hooray! We found totalHits images."`
+
+### Бібліотека `SimpleLightbox`
+
+Додати відображення великої версії зображення з бібліотекою
+[SimpleLightbox](https://simplelightbox.com/) для повноцінної галереї.
+
+- У розмітці необхідно буде обгорнути кожну картку зображення у посилання, як
+  зазначено в документації.
+- Бібліотека містить матод `refresh()`, який обов'язково потрібно викликати
+  щоразу після додавання нової групи карток зображень.
+
+Для того щоб підключити CSS код бібліотеки в проект, необхідно додати ще один
+імпорт, крім того, що описаний в документації.
+
+```js
+// Описаний в документації
+import SimpleLightbox from "simplelightbox";
+// Додатковий імпорт стилів
+import "simplelightbox/dist/simple-lightbox.min.css";
+```
+
+### Прокручування сторінки
+
+Зробити плавне прокручування сторінки після запиту і відтворення кожної
+наступної групи зображень. Ось тобі код-підказка, але розберися у ньому
+самостійно.
+
+```js
+const { height: cardHeight } = document
+  .querySelector(".gallery")
+  .firstElementChild.getBoundingClientRect();
+
+window.scrollBy({
+  top: cardHeight * 2,
+  behavior: "smooth",
+});
+```
